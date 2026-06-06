@@ -1,15 +1,52 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from loguru import logger
+import sys
 
-app= FastAPI(
-    title="SnappCart API",
-    version="0.1.0",
-    description="Backend for SnappCart e-commerce platform"
+from app.core.config import settings
+from app.core.database import check_db_connection
+from app.core.redis import check_redis_connection
+from app.api.v1.health import router as health_router
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{name}</cyan> | {message}",
+    level="DEBUG" if settings.debug else "INFO",
+    colorize=True        # ← ADD THIS
 )
 
-@app.get("/")
-def root():
-    return {"message": "SnappCart API is running 🚀"}
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "snappcart-backend"}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(f"Starting {settings.app_name} 🚀")
+    logger.info(f"Environment: {settings.environment}")
+    await check_db_connection()
+    await check_redis_connection()
+    yield
+    logger.info("Shutting down SnappCart API...")
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    description="Production-grade e-commerce platform",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(
+    health_router,
+    prefix="/api/v1",
+    tags=["Health"]
+)

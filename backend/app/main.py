@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.database import check_db_connection
 from app.core.redis import check_redis_connection
 from app.api.v1.health import router as health_router
+from app.api.v1.auth.router import router as auth_router
 
 logger.remove()
 logger.add(
@@ -45,8 +46,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    health_router,
-    prefix="/api/v1",
-    tags=["Health"]
-)
+app.include_router(health_router, prefix="/api/v1",tags=["Health"])
+app.include_router(auth_router, prefix="/api/v1",tags=["Auth"])

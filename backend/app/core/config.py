@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
-
+    
+    frontend_url: str = "http://localhost:3000"
     class Config:
         env_file = ".env"
         case_sensitive = False

@@ -26,7 +26,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-20 px-4">
+      <section className="relative overflow-hidden bg-linear-to-b from-primary/5 via-background to-background py-20 px-4">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
@@ -123,12 +123,12 @@ export default async function HomePage() {
 
                 <span
                   className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                    health.status === "healthy"
+                    health?.status === "healthy"
                       ? "bg-green-500/10 text-green-600 dark:text-green-400"
                       : "bg-yellow-500/10 text-yellow-600"
                   }`}
                 >
-                  {health.status === "healthy"
+                  {health?.status === "healthy"
                     ? "All Systems Operational"
                     : "Degraded"}
                 </span>

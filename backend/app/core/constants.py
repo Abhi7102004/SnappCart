@@ -12,7 +12,11 @@ PASSWORD_RESET_TOKEN_EXPIRE_HOURS = 1
 REFRESH_TOKEN_PREFIX = "refresh_token:"
 OTP_PREFIX = "otp:"
 RATE_LIMIT_PREFIX = "rate_limit:"
+RESEND_VERIFY_PREFIX = "resend_verify:"
 
 # ── Cookies ───────────────────────────────────────────────────────
 REFRESH_COOKIE_NAME = "refresh_token"
 REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
+
+# ── Email ───────────────────────────────────────────────────────
+RESEND_VERIFICATION_COOLDOWN_SECONDS = 60

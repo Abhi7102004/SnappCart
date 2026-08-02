@@ -18,12 +18,15 @@ from app.core.constants import (
     EMAIL_VERIFY_TOKEN_EXPIRE_HOURS,
     REFRESH_COOKIE_NAME,
     REFRESH_COOKIE_PATH,
+    RESEND_VERIFICATION_COOLDOWN_SECONDS,
+    RESEND_VERIFY_PREFIX
 )
 from app.core.security.password import hash_password, verify_password, DUMMY_HASH
 from app.core.security.jwt import (
     create_access_token, create_refresh_token,
     decode_token, get_refresh_token_key,
 )
+from app.services.email_service import EmailService
 from app.core.security.utils import ensure_utc, is_expired, utc_now
 from app.core.security.dependencies import validate_user_active
 from app.core.redis import redis_client
@@ -116,8 +119,8 @@ class AuthService:
         logger.info(f"New user registered: {user.email or user.phone}")
 
         # TODO Day 27: send actual email via AWS SES
-        if settings.debug and verify_token:
-            logger.debug(f"Email verify token: {verify_token}")
+        if verify_token:
+            EmailService.send_verification_email(user.email,user.full_name,user.email_verify_token)
 
         return RegisterResponse(
             message="Registration successful. Please verify your email.",
@@ -311,3 +314,52 @@ class AuthService:
 
         logger.info(f"User logged out: {current_user.email or current_user.phone}")
         return {"message": "Logged out successfully"}
+    
+    @staticmethod
+    async def resend_verification_mail(email:str,db:Session) -> dict:
+        """
+        Resend verification email.
+        Rate limited via Redis (1 request per RESEND_VERIFICATION_COOLDOWN_SECONDS)
+        to prevent spam-clicking the resend button.
+
+        Generic response regardless of whether email exists — prevents
+        email enumeration (same principle as login's generic error).
+        """
+
+        cooldown_key = f"{RESEND_VERIFY_PREFIX}{email}"
+        
+        if await redis_client.get(cooldown_key):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Please wait before requesting another verification email"
+            )
+        
+        user = db.query(User).filter(
+            User.email == email,
+            User.is_deleted == False
+        ).first()
+
+        generic_response = {
+            "message": "If an account exists with this email, a verification link has been sent."
+        }
+        
+        if not user or user.is_email_verified:
+            # Set cooldown anyway — prevents attacker from probing
+            # which emails exist by noticing missing cooldown behavior
+            await redis_client.setex(cooldown_key, RESEND_VERIFICATION_COOLDOWN_SECONDS, "1")
+            return generic_response
+
+        verify_token=secrets.token_urlsafe(32)
+        user.email_verify_token = verify_token
+        user.email_verify_token_expires = utc_now() + timedelta(
+            hours=EMAIL_VERIFY_TOKEN_EXPIRE_HOURS
+        )
+        db.commit()
+        
+        if verify_token:
+            EmailService.send_verification_email(email,user.full_name,verify_token)
+
+        await redis_client.setex(cooldown_key,RESEND_VERIFICATION_COOLDOWN_SECONDS,"1")
+        
+        logger.info(f"Verification email resent: {user.email}")
+        return generic_response

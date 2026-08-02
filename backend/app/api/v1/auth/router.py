@@ -6,7 +6,7 @@ from app.core.security.dependencies import get_current_user
 from app.schemas.user import UserRegisterRequest, UserResponse
 from app.schemas.auth import (
     RegisterResponse, LoginRequest, LoginResponse,
-    RefreshResponse, MessageResponse, EmailVerifyRequest,
+    RefreshResponse, MessageResponse, EmailVerifyRequest,ResendVerificationRequest
 )
 from app.services.auth_service import AuthService
 from app.models.user import User
@@ -94,4 +94,12 @@ async def verify_email_link(
     db: Session = Depends(get_db),
 ) -> MessageResponse:
     result = AuthService.verify_email(token, db)
+    return MessageResponse(message=result["message"])
+
+@router.post("/resend-verification",response_model=MessageResponse)
+async def resend_verification_mail(
+    data:ResendVerificationRequest,
+    db:Session=Depends(get_db)
+)-> MessageResponse:
+    result = await AuthService.resend_verification_mail(data.email, db)
     return MessageResponse(message=result["message"])

@@ -13,11 +13,12 @@ REFRESH_TOKEN_PREFIX = "refresh_token:"
 OTP_PREFIX = "otp:"
 RATE_LIMIT_PREFIX = "rate_limit:"
 RESEND_VERIFY_PREFIX = "resend_verify:"
+FORGOT_PASSWORD_PREFIX = "forgot_password:"
 
 # ── Cookies ───────────────────────────────────────────────────────
 REFRESH_COOKIE_NAME = "refresh_token"
 REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
 
-# ── Email ───────────────────────────────────────────────────────
+# ── Email / Cooldowns ─────────────────────────────────────────────
 RESEND_VERIFICATION_COOLDOWN_SECONDS = 60
 FORGOT_PASSWORD_COOLDOWN_SECONDS = 60

@@ -13,16 +13,12 @@ from app.schemas.auth import RegisterResponse, LoginResponse, RefreshResponse
 
 from app.core.config import settings
 from app.core.constants import (
-    MAX_FAILED_LOGIN_ATTEMPTS,
-    ACCOUNT_LOCKOUT_MINUTES,
-    EMAIL_VERIFY_TOKEN_EXPIRE_HOURS,
-    REFRESH_COOKIE_NAME,
-    REFRESH_COOKIE_PATH,
-    RESEND_VERIFICATION_COOLDOWN_SECONDS,
-    RESEND_VERIFY_PREFIX,
-    PASSWORD_RESET_TOKEN_EXPIRE_HOURS,
+    MAX_FAILED_LOGIN_ATTEMPTS,ACCOUNT_LOCKOUT_MINUTES,EMAIL_VERIFY_TOKEN_EXPIRE_HOURS,
+    REFRESH_COOKIE_NAME,REFRESH_COOKIE_PATH,RESEND_VERIFICATION_COOLDOWN_SECONDS,
+    RESEND_VERIFY_PREFIX,FORGOT_PASSWORD_PREFIX,PASSWORD_RESET_TOKEN_EXPIRE_HOURS,
     FORGOT_PASSWORD_COOLDOWN_SECONDS,
 )
+from app.core import messages as msg
 from app.core.security.password import hash_password, verify_password, DUMMY_HASH
 from app.core.security.jwt import (
     create_access_token, create_refresh_token,
@@ -77,7 +73,7 @@ class AuthService:
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this email already exists"
+                    detail=msg.AUTH_EMAIL_EXISTS
                 )
 
         if data.phone:
@@ -88,7 +84,7 @@ class AuthService:
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this phone number already exists"
+                    detail=msg.AUTH_PHONE_EXISTS
                 )
 
         hashed = hash_password(data.password)
@@ -125,7 +121,7 @@ class AuthService:
             EmailService.send_verification_email(user.email,user.full_name,user.email_verify_token)
 
         return RegisterResponse(
-            message="Registration successful. Please verify your email.",
+            message=msg.AUTH_REGISTER_SUCCESS,
             user=UserResponse.model_validate(user),
             email_verification_sent=bool(data.email),
         )
@@ -143,17 +139,17 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired verification token"
+                detail=msg.AUTH_VERIFY_TOKEN_INVALID
             )
 
         if is_expired(user.email_verify_token_expires):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification token has expired. Request a new one."
+                detail=msg.AUTH_VERIFY_TOKEN_EXPIRED
             )
 
         if user.is_email_verified:
-            return {"message": "Email already verified"}
+            return {"message": msg.AUTH_EMAIL_ALREADY_VERIFIED}
 
         user.is_email_verified = True
         user.email_verify_token = None
@@ -161,7 +157,7 @@ class AuthService:
         db.commit()
 
         logger.info(f"Email verified: {user.email}")
-        return {"message": "Email verified successfully"}
+        return {"message": msg.AUTH_EMAIL_VERIFIED_SUCCESS}
 
     # ── LOGIN ────────────────────────────────────────────────────────
 
@@ -194,17 +190,17 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email/phone or password"
+                detail=msg.AUTH_INVALID_CREDENTIALS
             )
 
         # Active/banned check (no lock check here — handled below,
         # since login uniquely needs to RESET an expired lock)
         if not user.is_active:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Account has been deactivated")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, msg.AUTH_ACCOUNT_DEACTIVATED)
         if user.is_banned:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                f"Account banned: {user.banned_reason or 'Policy violation'}"
+                msg.AUTH_ACCOUNT_BANNED.format(reason=user.banned_reason or "Policy violation")
             )
 
         # Lock check WITH reset-if-expired (only login does this)
@@ -212,8 +208,7 @@ class AuthService:
             if ensure_utc(user.locked_until) > utc_now():
                 raise HTTPException(
                     status_code=status.HTTP_423_LOCKED,
-                    detail=f"Account locked until {user.locked_until.strftime('%H:%M UTC')}. "
-                           f"Too many failed login attempts."
+                    detail=msg.AUTH_ACCOUNT_LOCKED.format(until=user.locked_until.strftime('%H:%M UTC'))
                 )
             # Lock expired → forgive it
             user.locked_until = None
@@ -229,14 +224,13 @@ class AuthService:
                 db.commit()
                 raise HTTPException(
                     status_code=status.HTTP_423_LOCKED,
-                    detail=f"Account locked for {ACCOUNT_LOCKOUT_MINUTES} minutes "
-                           f"due to too many failed attempts"
+                    detail=msg.AUTH_ACCOUNT_LOCKED_DURATION.format(minutes=ACCOUNT_LOCKOUT_MINUTES)
                 )
 
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email/phone or password"
+                detail=msg.AUTH_INVALID_CREDENTIALS
             )
 
         # ── Successful login ─────────────────────────────────────
@@ -267,7 +261,7 @@ class AuthService:
         """Issue new access token using refresh token from cookie. Rotates refresh token."""
         invalid_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token. Please login again."
+            detail=msg.AUTH_INVALID_REFRESH_TOKEN
         )
 
         refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
@@ -315,7 +309,7 @@ class AuthService:
         response.delete_cookie(key=REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
 
         logger.info(f"User logged out: {current_user.email or current_user.phone}")
-        return {"message": "Logged out successfully"}
+        return {"message": msg.AUTH_LOGOUT_SUCCESS}
     
     @staticmethod
     async def resend_verification_mail(email:str,db:Session) -> dict:
@@ -333,7 +327,7 @@ class AuthService:
         if await redis_client.get(cooldown_key):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Please wait before requesting another verification email"
+                detail=msg.RATE_LIMIT_COOLDOWN.format(action="verification email")
             )
         
         user = db.query(User).filter(
@@ -342,7 +336,7 @@ class AuthService:
         ).first()
 
         generic_response = {
-            "message": "If an account exists with this email, a verification link has been sent."
+            "message": msg.AUTH_VERIFICATION_SENT_GENERIC
         }
         
         if not user or user.is_email_verified:
@@ -374,12 +368,12 @@ class AuthService:
         Rate limited via Redis cooldown (same pattern as resend-verification).
         """
         
-        cooldown_key=f"forgot_password_cooldown:{email}"
+        cooldown_key=f"{FORGOT_PASSWORD_PREFIX}{email}"
         
         if await redis_client.get(cooldown_key):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Please wait before requesting another password reset"
+                detail=msg.RATE_LIMIT_COOLDOWN.format(action="password reset")
             )
         
         user = db.query(User).filter(
@@ -388,7 +382,7 @@ class AuthService:
         ).first()
         
         generic_response = {
-            "message": "If an account exists with this email, a password reset link has been sent."
+            "message": msg.AUTH_RESET_SENT_GENERIC
         }
         
         if not user or user.hashed_password is None:
@@ -421,13 +415,13 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset token"
+                detail=msg.AUTH_RESET_TOKEN_INVALID
             )
         
         if is_expired(user.password_reset_token_expires):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Reset token has expired. Please request a new one."
+                detail=msg.AUTH_RESET_TOKEN_EXPIRED
             )
         
         user.hashed_password=hash_password(new_password)
@@ -442,7 +436,7 @@ class AuthService:
         await redis_client.delete(redis_key)
         
         logger.info(f"Password reset completed: {user.email}")
-        return {"message": "Password reset successful. Please log in with your new password."}
+        return {"message": msg.AUTH_RESET_SUCCESS}
 
 
         

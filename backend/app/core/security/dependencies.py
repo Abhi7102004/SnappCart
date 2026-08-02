@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.security.jwt import decode_token
 from app.core.security.utils import ensure_utc, utc_now
 from app.models.user import User, UserRole
+from app.core import messages as msg
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login",
@@ -31,21 +32,20 @@ def validate_user_active(user: User) -> None:
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account has been deactivated"
+            detail=msg.AUTH_ACCOUNT_DEACTIVATED
         )
 
     if user.is_banned:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Account banned: {user.banned_reason or 'Policy violation'}"
+            detail=msg.AUTH_ACCOUNT_BANNED
         )
 
     if user.locked_until and ensure_utc(user.locked_until) > utc_now():
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
-            detail="Account temporarily locked due to too many failed attempts"
+            detail=msg.AUTH_ACCOUNT_TEMPORARILY_LOCKED
         )
-
 
 async def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme),
@@ -54,7 +54,7 @@ async def get_current_user(
     """Extract + verify JWT access token. Returns authenticated User object."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail=msg.AUTH_CREDENTIALS_INVALID,
         headers={"WWW-Authenticate": "Bearer"},
     )
 

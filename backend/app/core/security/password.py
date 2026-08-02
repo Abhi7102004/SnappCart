@@ -15,6 +15,5 @@ def hash_password(password:str) -> str:
 def verify_password(plain_password:str , hashed_password:str) -> bool:
     """
     Constant-time comparison — prevents timing attacks.
-    Always runs even if user doesn't exist (use DUMMY_HASH).
     """
     return pwd_context.verify(plain_password,hashed_password)

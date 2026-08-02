@@ -6,7 +6,8 @@ from app.core.security.dependencies import get_current_user
 from app.schemas.user import UserRegisterRequest, UserResponse
 from app.schemas.auth import (
     RegisterResponse, LoginRequest, LoginResponse,
-    RefreshResponse, MessageResponse, EmailVerifyRequest,ResendVerificationRequest
+    RefreshResponse, MessageResponse, EmailVerifyRequest,
+    ResendVerificationRequest,ForgotPasswordRequest, ResetPasswordRequest
 )
 from app.services.auth_service import AuthService
 from app.models.user import User
@@ -102,4 +103,20 @@ async def resend_verification_mail(
     db:Session=Depends(get_db)
 )-> MessageResponse:
     result = await AuthService.resend_verification_mail(data.email, db)
+    return MessageResponse(message=result["message"])
+
+@router.post("/forgot-password",response_model=MessageResponse)
+async def forgot_password(
+    data:ForgotPasswordRequest,
+    db:Session=Depends(get_db)
+) -> MessageResponse:
+    result = await AuthService.forgot_password(data.email,db)
+    return MessageResponse(message=result["message"])
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(
+    data: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    result = await AuthService.reset_password(data.token, data.new_password, db)
     return MessageResponse(message=result["message"])

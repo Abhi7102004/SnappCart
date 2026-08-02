@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr,field_validator
 from typing import Optional
 from app.schemas.user import UserResponse
+from app.core.validators import validate_password_strength
 
 class RegisterResponse(BaseModel):
     """Response after successful registration"""
@@ -47,3 +48,21 @@ class ChangePasswordRequest(BaseModel):
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
+    
+class ResetPasswordRequest(BaseModel):
+    token:str
+    new_password:str
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_password(cls,v:str) ->str:
+        return validate_password_strength(v)
+
+class ChangePasswordRequest(BaseModel):
+    old_password:str
+    new_password:str
+    
+    @field_validator("new_password")
+    @classmethod
+    def _validate_new_password(cls, v: str) -> str:
+        return validate_password_strength(v)

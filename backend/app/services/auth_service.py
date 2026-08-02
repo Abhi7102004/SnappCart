@@ -19,7 +19,9 @@ from app.core.constants import (
     REFRESH_COOKIE_NAME,
     REFRESH_COOKIE_PATH,
     RESEND_VERIFICATION_COOLDOWN_SECONDS,
-    RESEND_VERIFY_PREFIX
+    RESEND_VERIFY_PREFIX,
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS,
+    FORGOT_PASSWORD_COOLDOWN_SECONDS,
 )
 from app.core.security.password import hash_password, verify_password, DUMMY_HASH
 from app.core.security.jwt import (
@@ -363,3 +365,84 @@ class AuthService:
         
         logger.info(f"Verification email resent: {user.email}")
         return generic_response
+
+    @staticmethod
+    async def forgot_password(email:str,db:Session) -> dict:
+        """
+        Request password reset link.
+        Generic response always — never reveals whether the email exists.
+        Rate limited via Redis cooldown (same pattern as resend-verification).
+        """
+        
+        cooldown_key=f"forgot_password_cooldown:{email}"
+        
+        if await redis_client.get(cooldown_key):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Please wait before requesting another password reset"
+            )
+        
+        user = db.query(User).filter(
+            User.email == email,
+            User.is_deleted == False
+        ).first()
+        
+        generic_response = {
+            "message": "If an account exists with this email, a password reset link has been sent."
+        }
+        
+        if not user or user.hashed_password is None:
+            await redis_client.setex(cooldown_key, FORGOT_PASSWORD_COOLDOWN_SECONDS, "1")
+            return generic_response
+        
+        reset_token=secrets.token_urlsafe(32)
+        user.password_reset_token=reset_token
+        user.password_reset_token_expires=utc_now()+timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+        db.commit()
+        
+        EmailService.send_password_reset_email(email,user.full_name,reset_token)
+        
+        logger.info(f"Password reset requested: {user.email}")
+        return generic_response
+
+    @staticmethod
+    async def reset_password(token:str,new_password:str,db:Session) -> dict:
+        """
+        Reset password using token from email.
+        Invalidates the token (single-use) AND the user's active session —
+        if the password was compromised, this logs out whoever had access.
+        """
+        
+        user = db.query(User).filter(
+            User.password_reset_token == token,
+            User.is_deleted == False
+        ).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+        
+        if is_expired(user.password_reset_token_expires):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reset token has expired. Please request a new one."
+            )
+        
+        user.hashed_password=hash_password(new_password)
+        user.password_reset_token=None
+        user.password_reset_token_expires=None
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        
+        db.commit()
+        
+        redis_key=get_refresh_token_key(str(user.id))
+        await redis_client.delete(redis_key)
+        
+        logger.info(f"Password reset completed: {user.email}")
+        return {"message": "Password reset successful. Please log in with your new password."}
+
+
+        

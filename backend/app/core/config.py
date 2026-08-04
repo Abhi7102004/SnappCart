@@ -27,6 +27,19 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     
     frontend_url: str = "http://localhost:3000"
+    
+    #OAuth
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str
+    
+    
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_region: str = "ap-south-1"
+    ses_from_email: str = ""
+    ses_from_name: str = "SnappCart"
+
     class Config:
         env_file = ".env"
         case_sensitive = False

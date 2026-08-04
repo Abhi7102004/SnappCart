@@ -22,3 +22,7 @@ REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
 # ── Email / Cooldowns ─────────────────────────────────────────────
 RESEND_VERIFICATION_COOLDOWN_SECONDS = 60
 FORGOT_PASSWORD_COOLDOWN_SECONDS = 60
+
+# ── OAuth ─────────────────────────────────────────────────────────
+OAUTH_STATE_PREFIX = "oauth_state:"
+OAUTH_STATE_TTL_SECONDS = 300

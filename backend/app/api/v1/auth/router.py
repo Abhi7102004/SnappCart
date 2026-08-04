@@ -12,7 +12,7 @@ from app.schemas.auth import (
 from app.services.auth_service import AuthService
 from app.models.user import User
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post(

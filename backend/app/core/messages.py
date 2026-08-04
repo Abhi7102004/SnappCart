@@ -26,3 +26,6 @@ AUTH_RESET_SENT_GENERIC = "If an account exists with this email, a password rese
 AUTH_LOGOUT_SUCCESS = "Logged out successfully"
 
 RATE_LIMIT_COOLDOWN = "Please wait before requesting another {action}"
+
+OAUTH_STATE_INVALID = "Invalid or expired OAuth state. Please try again."
+OAUTH_FAILED = "OAuth authentication failed. Please try again."

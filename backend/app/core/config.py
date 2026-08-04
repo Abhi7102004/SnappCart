@@ -28,11 +28,15 @@ class Settings(BaseSettings):
     
     frontend_url: str = "http://localhost:3000"
     
-    #OAuth
-    google_client_id: str
-    google_client_secret: str
-    google_redirect_uri: str
-    
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+
+    # GitHub OAuth
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    github_redirect_uri: str = "http://localhost:8000/api/v1/auth/github/callback"
     
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""

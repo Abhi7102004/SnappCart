@@ -19,7 +19,7 @@ async def google_login():
 
 @router.get("/google/callback")
 async def google_callback(
-    code: str = Query(...),
+    code: str = Query(...),         #Query(...) means in url params code,state is present and ... ensures it's required field
     state: str = Query(...),
     db: Session = Depends(get_db),
 ):
@@ -39,7 +39,6 @@ async def google_callback(
 async def github_login():
     url = await OAuthService.get_github_authorization_url()
     return OAuthURLResponse(authorization_url=url)
-
 
 @router.get("/github/callback")
 async def github_callback(

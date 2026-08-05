@@ -10,6 +10,7 @@ from app.core.redis import check_redis_connection
 from app.api.v1.health import router as health_router
 from app.api.v1.auth.router import router as auth_router
 from app.api.v1.auth.oauth_router import router as oauth_router
+from app.api.v1.admin.router import router as admin_router
 
 logger.remove()
 logger.add(
@@ -50,3 +51,4 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api/v1",tags=["Health"])
 app.include_router(auth_router, prefix="/api/v1",tags=["Auth"])
 app.include_router(oauth_router, prefix="/api/v1",tags=["OAuth"])
+app.include_router(admin_router, prefix="/api/v1",tags=["Admin"])

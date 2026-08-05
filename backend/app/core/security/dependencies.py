@@ -114,6 +114,14 @@ def require_roles(*roles: UserRole):
         return current_user
     return role_checker
 
+def verify_ownership(resource_owner_id, current_user: User) -> None:
+    if current_user.role==UserRole.admin:
+        return
+    if str(resource_owner_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this resource"
+        )
 
 require_customer = require_roles(UserRole.customer, UserRole.seller, UserRole.admin)
 require_seller = require_roles(UserRole.seller, UserRole.admin)

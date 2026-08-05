@@ -26,3 +26,7 @@ FORGOT_PASSWORD_COOLDOWN_SECONDS = 60
 # ── OAuth ─────────────────────────────────────────────────────────
 OAUTH_STATE_PREFIX = "oauth_state:"
 OAUTH_STATE_TTL_SECONDS = 300
+
+# ── Pagination ────────────────────────────────────────────────────
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 100

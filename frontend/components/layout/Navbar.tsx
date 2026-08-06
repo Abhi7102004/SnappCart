@@ -72,7 +72,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0 group">
             <motion.div
-              className="p-[7px] rounded-md bg-violet-600"
+              className="p-1.75 rounded-md bg-violet-600"
               whileHover={{ rotate: 8, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400 }}
             >

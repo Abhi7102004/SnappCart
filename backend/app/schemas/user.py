@@ -28,7 +28,7 @@ class UserRegisterRequest(BaseModel):
     @field_validator("full_name")
     @classmethod
     def validate_full_name(cls, v: Optional[str]) -> Optional[str]:
-        return validate_full_name()
+        return validate_full_name(v)
     
     @model_validator(mode="after")
     def email_or_phone_required(self) -> "UserRegisterRequest":

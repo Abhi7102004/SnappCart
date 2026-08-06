@@ -3,8 +3,9 @@ import { api, publicApi } from "@/lib/axios"
 import { getApiError } from "@/lib/api-error"
 import { User } from "@/types/user"
 import {
-  LoginRequest, LoginResponse,
-  RegisterRequest, RegisterResponse,
+  LoginRequest, LoginResponse,RegisterRequest,
+  RegisterResponse,MessageResponse,ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from "@/types/auth"
 
 interface AuthState {
@@ -14,6 +15,10 @@ interface AuthState {
     isLoginLoading: boolean
     isRegisterLoading: boolean
     isFetchMeLoading: boolean
+    isForgotPasswordLoading: boolean
+    isResetPasswordLoading: boolean
+    isResendVerificationLoading: boolean
+
     error: string | null
 
 }
@@ -25,6 +30,9 @@ const initialState: AuthState = {
     isLoginLoading: false,
     isRegisterLoading: false,
     isFetchMeLoading: false,
+    isForgotPasswordLoading:false,
+    isResetPasswordLoading:false,
+    isResendVerificationLoading:false,
     error: null,
 }
 
@@ -61,6 +69,58 @@ export const fetchCurrentUser = createAsyncThunk<
 >("auth/fetchMe", async (_, { rejectWithValue }) => {
   try {
     const { data } = await api.get<User>("/auth/me")
+    return data
+  } catch (error) {
+    return rejectWithValue(getApiError(error))
+  }
+})
+
+export const verifyEmail = createAsyncThunk<
+  MessageResponse,
+  string,
+  { rejectValue: string }
+>("auth/verifyEmail", async (token, { rejectWithValue }) => {
+  try {
+    const { data } = await publicApi.post<MessageResponse>("/auth/verify-email", { token })
+    return data
+  } catch (error) {
+    return rejectWithValue(getApiError(error))
+  }
+})
+
+export const resendVerificationEmail = createAsyncThunk<
+  MessageResponse,
+  string,
+  { rejectValue: string }
+>("auth/resendVerification", async (email, { rejectWithValue }) => {
+  try {
+    const { data } = await publicApi.post<MessageResponse>("/auth/resend-verification", { email })
+    return data
+  } catch (error) {
+    return rejectWithValue(getApiError(error))
+  }
+})
+
+export const forgotPassword = createAsyncThunk<
+  MessageResponse,
+  string,
+  { rejectValue: string }
+>("auth/forgotPassword", async (email, { rejectWithValue }) => {
+  try {
+    const { data } = await publicApi.post<MessageResponse>("/auth/forgot-password", { email })
+    return data
+  } catch (error) {
+    return rejectWithValue(getApiError(error))
+  }
+})
+
+export const resetPassword = createAsyncThunk<
+  MessageResponse,
+  ResetPasswordRequest,
+  { rejectValue: string }
+>("auth/resetPassword", async (payload, { rejectWithValue }) => {
+  try {
+    const { data } = await publicApi.post<MessageResponse>("/auth/reset-password", payload)
     return data
   } catch (error) {
     return rejectWithValue(getApiError(error))
@@ -144,6 +204,36 @@ const authSlice = createSlice({
             state.user = null
             state.accessToken = null
             state.isLoggedIn = false
+        })
+
+        .addCase(resendVerificationEmail.pending, (state) => {
+            state.isResendVerificationLoading = true
+        })
+        .addCase(resendVerificationEmail.fulfilled, (state) => {
+            state.isResendVerificationLoading = false
+        })
+        .addCase(resendVerificationEmail.rejected, (state) => {
+            state.isResendVerificationLoading = false
+        })
+        
+        .addCase(forgotPassword.pending, (state) => {
+            state.isForgotPasswordLoading = true
+        })
+        .addCase(forgotPassword.fulfilled, (state) => {
+            state.isForgotPasswordLoading = false
+        })
+        .addCase(forgotPassword.rejected, (state) => {
+            state.isForgotPasswordLoading = false
+        })
+        
+        .addCase(resetPassword.pending, (state) => {
+            state.isResetPasswordLoading = true
+        })
+        .addCase(resetPassword.fulfilled, (state) => {
+            state.isResetPasswordLoading = false
+        })
+        .addCase(resetPassword.rejected, (state) => {
+            state.isResetPasswordLoading = false
         })
     },
 })

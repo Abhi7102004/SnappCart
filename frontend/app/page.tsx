@@ -1,8 +1,6 @@
 import Link from "next/link"
 import { HealthCheck } from "@/types/api"
 import {
-  CheckCircle2,
-  XCircle,
   Zap,
   ShoppingBag,
   Truck,
@@ -21,7 +19,7 @@ async function getHealthStatus(): Promise<HealthCheck | null> {
 }
 
 export default async function HomePage() {
-  const health = await getHealthStatus()
+  // const health = await getHealthStatus()
 
   return (
     <div className="min-h-screen">
@@ -111,7 +109,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Backend Status */}
+      {/* Backend Status
       {health && (
         <section className="py-12 px-4">
           <div className="container mx-auto max-w-md">
@@ -173,7 +171,7 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-      )}
+      )} */}
     </div>
   )
 }

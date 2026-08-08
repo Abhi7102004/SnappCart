@@ -188,6 +188,9 @@ class OAuthService:
                     "client_id": settings.github_client_id,
                     "client_secret": settings.github_client_secret,
                     "redirect_uri": settings.github_redirect_uri,
+                },
+                headers={
+                    "Accept": "application/json"
                 }
             )
             

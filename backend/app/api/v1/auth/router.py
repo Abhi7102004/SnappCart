@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security.dependencies import get_current_user
 from app.schemas.user import UserRegisterRequest, UserResponse
+from app.schemas.two_factor import TwoFactorLoginResponse
 from app.schemas.auth import (
     RegisterResponse, LoginRequest, LoginResponse,
     RefreshResponse, MessageResponse, EmailVerifyRequest,
@@ -29,7 +30,7 @@ async def register(
 
 @router.post(
     "/login",
-    response_model=LoginResponse,
+    response_model=LoginResponse | TwoFactorLoginResponse,
 )
 async def login(
     data: LoginRequest,

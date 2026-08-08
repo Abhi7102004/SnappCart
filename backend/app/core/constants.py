@@ -30,3 +30,9 @@ OAUTH_STATE_TTL_SECONDS = 300
 # ── Pagination ────────────────────────────────────────────────────
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
+
+# ── 2FA ───────────────────────────────────────────────────────────
+BACKUP_CODE_COUNT = 5
+TWO_FA_ISSUER = "SnappCart"
+TWO_FA_TOTP_PREFIX = "2fa_pending:"
+TWO_FA_TOTP_TTL_SECONDS = 300

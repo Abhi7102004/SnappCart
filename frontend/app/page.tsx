@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { HealthCheck } from "@/types/api"
+// import { HealthCheck } from "@/types/api"
 import {
   Zap,
   ShoppingBag,
@@ -8,15 +8,15 @@ import {
   Sparkles,
 } from "lucide-react"
 
-async function getHealthStatus(): Promise<HealthCheck | null> {
-  try {
-    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL
-    const res = await fetch(`${apiUrl}/api/v1/health`, { cache: "no-store" })
-    return res.json()
-  } catch {
-    return null
-  }
-}
+// async function getHealthStatus(): Promise<HealthCheck | null> {
+//   try {
+//     const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL
+//     const res = await fetch(`${apiUrl}/api/v1/health`, { cache: "no-store" })
+//     return res.json()
+//   } catch {
+//     return null
+//   }
+// }
 
 export default async function HomePage() {
   // const health = await getHealthStatus()

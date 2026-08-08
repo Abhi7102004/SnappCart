@@ -1,11 +1,11 @@
 "use client"
 
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useDispatch, useSelector } from "react-redux"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Zap } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, Zap, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 
 import type { AppDispatch, RootState } from "@/store"
@@ -43,52 +43,68 @@ export default function LoginPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="w-full max-w-sm rounded-2xl border border-border bg-card p-8"
+      className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 shadow-xl shadow-black/5"
     >
-      <div className="flex flex-col items-center mb-6">
-        <div className="p-2 rounded-xl bg-primary mb-3">
-          <Zap className="h-5 w-5 text-primary-foreground" />
+      <div className="mb-7">
+        <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-600 text-white">
+          <Zap className="h-5 w-5" />
         </div>
-        <h1 className="text-xl font-bold">Welcome back</h1>
-        <p className="text-sm text-muted-foreground mt-1">Log in to continue shopping</p>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Log in to your SnappCart account to continue.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Email or phone</label>
-          <input
-            type="text"
-            required
-            value={emailOrPhone}
-            onChange={(e) => setEmailOrPhone(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-          />
+          <label htmlFor="emailOrPhone" className="text-sm font-medium">
+            Email or phone
+          </label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              id="emailOrPhone"
+              type="text"
+              required
+              value={emailOrPhone}
+              onChange={(e) => setEmailOrPhone(e.target.value)}
+              placeholder="you@example.com"
+              className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-3 text-sm outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Password</label>
-            <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+            >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              id="password"
               type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full h-10 rounded-lg border border-border bg-background px-3 pr-10 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+              placeholder="Enter your password"
+              className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-10 text-sm outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
             />
             <button
               type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -96,23 +112,28 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         )}
 
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           type="submit"
           disabled={isLoginLoading}
-          className="w-full h-10 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
+          className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isLoginLoading ? "Logging in..." : "Log In"}
-        </motion.button>
+          {isLoginLoading ? (
+            "Logging in..."
+          ) : (
+            <>
+              Log in
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          )}
+        </button>
       </form>
 
-      <div className="flex items-center gap-3 my-6">
+      <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
         <span className="text-xs text-muted-foreground">or continue with</span>
         <div className="h-px flex-1 bg-border" />
@@ -120,9 +141,9 @@ export default function LoginPage() {
 
       <OAuthButtons />
 
-      <p className="text-center text-sm text-muted-foreground mt-6">
+      <p className="mt-7 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-primary font-medium hover:underline">
+        <Link href="/register" className="font-semibold text-violet-600 hover:underline dark:text-violet-400">
           Sign up
         </Link>
       </p>

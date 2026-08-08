@@ -9,7 +9,7 @@ from sqlalchemy import (
     DateTime, Integer, Text,
     Enum as SQLEnum
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID,JSONB
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -251,6 +251,23 @@ class User(Base):
         DateTime(timezone=True),
         nullable=True,
         comment="When user deleted their account"
+    )
+    
+    # ── 2FA ────────────────────────────────────────────────
+    
+    two_factor_enabled = Column(
+        Boolean,
+        default=False
+    )
+
+    two_factor_secret = Column(
+        String(255),
+        nullable=True
+    )
+
+    two_factor_backup_codes = Column(
+        JSONB,
+        nullable=True
     )
 
     def __repr__(self):

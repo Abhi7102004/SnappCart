@@ -24,6 +24,9 @@ from app.core.security.jwt import (
     create_access_token, create_refresh_token,
     decode_token, get_refresh_token_key,
 )
+from app.services.two_factor_service import TwoFactorService
+from app.schemas.two_factor import TwoFactorLoginResponse
+
 from app.services.email_service import EmailService
 from app.core.security.utils import ensure_utc, is_expired, utc_now
 from app.core.security.dependencies import validate_user_active
@@ -240,6 +243,10 @@ class AuthService:
         user.last_login_at = utc_now()
         db.commit()
 
+        if user.two_factor_enabled:
+            session_token = await TwoFactorService.create_pending_session(str(user.id))
+            return TwoFactorLoginResponse(session_token=session_token)
+        
         access_token = create_access_token(user_id=str(user.id), role=user.role.value)
         refresh_token = create_refresh_token(user_id=str(user.id))
 

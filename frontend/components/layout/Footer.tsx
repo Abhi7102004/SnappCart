@@ -9,6 +9,7 @@ import {
   FaFacebookF, FaTwitter, FaInstagram, FaYoutube
 } from "react-icons/fa"
 import { motion } from "framer-motion"
+import { useIsAuthRoute } from "@/hooks/useIsAuthRoute"
 
 const footerLinks = {
   shop: [
@@ -52,6 +53,8 @@ const socialLinks = [
   ]
 
 export default function Footer() {
+  const isAuthRoute = useIsAuthRoute()
+  if (isAuthRoute) return null
   return (
     <footer className="border-t border-border/50 bg-muted/20 mt-auto">
 

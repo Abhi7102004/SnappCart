@@ -29,3 +29,6 @@ RATE_LIMIT_COOLDOWN = "Please wait before requesting another {action}"
 
 OAUTH_STATE_INVALID = "Invalid or expired OAuth state. Please try again."
 OAUTH_FAILED = "OAuth authentication failed. Please try again."
+
+PRODUCT_NOT_FOUND = "Product not found"
+PRODUCT_INVALID_ID = "Invalid product ID format"

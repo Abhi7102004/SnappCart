@@ -3,9 +3,9 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSelector, useDispatch } from "react-redux"
-import { RootState } from "@/store"
+import { AppDispatch, RootState } from "@/store"
 import { toggleCart } from "@/store/slices/uiSlice"
-import { logout } from "@/store/slices/authSlice"
+import { logoutUser } from "@/store/slices/authSlice"
 import {
   ShoppingCart, Search, Bell, Zap,
   User, Package, Heart, Wallet,
@@ -24,9 +24,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
+import { useIsAuthRoute } from "@/hooks/useIsAuthRoute"
 
 export default function Navbar() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const { resolvedTheme, setTheme } = useTheme()
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth)
@@ -43,6 +44,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const isAuthRoute = useIsAuthRoute()
+  if (isAuthRoute) return null
+
   const getInitial = () => {
     if (user?.full_name) return user.full_name.charAt(0).toUpperCase()
     if (user?.email) return user.email.charAt(0).toUpperCase()
@@ -51,7 +55,7 @@ export default function Navbar() {
   }
 
   const handleLogout = () => {
-    dispatch(logout())
+    dispatch(logoutUser())
     router.push("/")
   }
 
@@ -67,24 +71,24 @@ export default function Navbar() {
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
+        <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 sm:gap-4">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0 group">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0 group">
             <motion.div
-              className="p-1.75 rounded-md bg-violet-600"
+              className="p-1.5 rounded-md bg-violet-600"
               whileHover={{ rotate: 8, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400 }}
             >
-              <Zap className="h-5 w-5 text-primary-foreground" />
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </motion.div>
-            <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors">
+            <span className="font-bold text-base sm:text-lg tracking-tight group-hover:text-primary transition-colors">
               SnappCart
             </span>
           </Link>
 
-          {/* Search bar — desktop */}
-          <div className="hidden md:flex flex-1 max-w-xl">
+          {/* Search bar — tablet/desktop only */}
+          <div className="hidden md:flex flex-1 max-w-sm lg:max-w-xl">
             <div className="relative w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -98,13 +102,14 @@ export default function Navbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
 
             {/* Mobile Search */}
             <motion.button
               className="md:hidden p-2 rounded-full hover:bg-muted transition-colors"
               whileTap={{ scale: 0.9 }}
               onClick={() => setSearchOpen(true)}
+              aria-label="Search"
             >
               <Search className="h-5 w-5" />
             </motion.button>
@@ -116,6 +121,7 @@ export default function Navbar() {
               whileHover={{ scale: 1.05 }}
               onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
               suppressHydrationWarning
+              aria-label="Toggle theme"
             >
               <Sun className="h-5 w-5 dark:hidden" />
               <Moon className="h-5 w-5 hidden dark:block" />
@@ -127,6 +133,7 @@ export default function Navbar() {
                 className="relative p-2 rounded-full hover:bg-muted transition-colors"
                 whileTap={{ scale: 0.9 }}
                 whileHover={{ scale: 1.05 }}
+                aria-label="Notifications"
               >
                 <Bell className="h-5 w-5" />
                 <AnimatePresence>
@@ -150,6 +157,7 @@ export default function Navbar() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => dispatch(toggleCart())}
+              aria-label="Cart"
             >
               <ShoppingCart className="h-5 w-5" />
               <AnimatePresence>
@@ -173,7 +181,7 @@ export default function Navbar() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all outline-none"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs sm:text-sm font-bold cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all outline-none ml-0.5"
                   >
                     {getInitial()}
                   </motion.button>
@@ -257,16 +265,32 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild className="rounded-full">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="sm" asChild className="rounded-full px-5">
-                    <Link href="/register">Sign Up</Link>
-                  </Button>
+              <>
+                {/* Mobile: single compact icon — was completely MISSING before
+                    (buttons were hidden md:flex with no fallback, so mobile
+                    guests had zero way to reach login) */}
+                <motion.div whileTap={{ scale: 0.9 }} className="sm:hidden ml-0.5">
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+                    aria-label="Login"
+                  >
+                    <User className="h-5 w-5" />
+                  </Link>
                 </motion.div>
-              </div>
+
+                {/* Tablet/Desktop: full buttons */}
+                <div className="hidden sm:flex items-center gap-2 ml-1">
+                  <Button variant="ghost" size="sm" asChild className="rounded-full">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button size="sm" asChild className="rounded-full px-5">
+                      <Link href="/register">Sign Up</Link>
+                    </Button>
+                  </motion.div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -293,6 +317,7 @@ export default function Navbar() {
               <button
                 onClick={() => setSearchOpen(false)}
                 className="p-2 rounded-full hover:bg-muted"
+                aria-label="Close search"
               >
                 <X className="h-5 w-5" />
               </button>

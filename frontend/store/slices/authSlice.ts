@@ -4,9 +4,10 @@ import { getApiError } from "@/lib/api-error"
 import { User } from "@/types/user"
 import {
   LoginRequest, LoginResponse,RegisterRequest,
-  RegisterResponse,MessageResponse,ForgotPasswordRequest,
+  RegisterResponse,MessageResponse,
   ResetPasswordRequest,
 } from "@/types/auth"
+import { TwoFactorLoginResponse } from "@/types/two-factor"
 
 interface AuthState {
     user: User | null
@@ -18,7 +19,8 @@ interface AuthState {
     isForgotPasswordLoading: boolean
     isResetPasswordLoading: boolean
     isResendVerificationLoading: boolean
-
+    pendingTwoFactorSession: string | null
+    isTwoFactorRequired: boolean
     error: string | null
 
 }
@@ -33,16 +35,18 @@ const initialState: AuthState = {
     isForgotPasswordLoading:false,
     isResetPasswordLoading:false,
     isResendVerificationLoading:false,
+    pendingTwoFactorSession:null,
+    isTwoFactorRequired: false,
     error: null,
 }
 
 export const loginUser = createAsyncThunk<
-  LoginResponse,
+  LoginResponse | TwoFactorLoginResponse,
   LoginRequest,
   { rejectValue: string }
 >("auth/login", async (credentials, { rejectWithValue }) => {
   try {
-    const { data } = await api.post<LoginResponse>("/auth/login", credentials)
+    const { data } = await api.post("/auth/login", credentials)
     return data
   } catch (error) {
     return rejectWithValue(getApiError(error))
@@ -152,8 +156,11 @@ const authSlice = createSlice({
         },
         clearAuthError: (state) => {
             state.error = null
-          },
-      
+        },
+        clearTwoFactorState: (state) => {
+          state.isTwoFactorRequired = false
+          state.pendingTwoFactorSession = null
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -163,10 +170,21 @@ const authSlice = createSlice({
             state.error = null
         })
         .addCase(loginUser.fulfilled, (state, action) => {
-            state.isLoginLoading = false
-            state.user = action.payload.user
-            state.accessToken = action.payload.access_token
-            state.isLoggedIn = true
+          state.isLoginLoading = false
+        
+          const payload = action.payload
+        
+          if ("two_factor_required" in payload) {
+            state.isTwoFactorRequired = true
+            state.pendingTwoFactorSession = payload.session_token
+            return
+          }
+        
+          state.user = payload.user
+          state.accessToken = payload.access_token
+          state.isTwoFactorRequired = false
+          state.pendingTwoFactorSession = null
+          state.isLoggedIn = true
         })
         .addCase(loginUser.rejected, (state, action) => {
             state.isLoginLoading = false
@@ -238,5 +256,5 @@ const authSlice = createSlice({
     },
 })
 
-export const { updateAccessToken, logout, clearAuthError } = authSlice.actions
+export const { updateAccessToken, logout, clearAuthError,clearTwoFactorState } = authSlice.actions
 export default authSlice.reducer

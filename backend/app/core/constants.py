@@ -17,7 +17,7 @@ FORGOT_PASSWORD_PREFIX = "forgot_password:"
 
 # ── Cookies ───────────────────────────────────────────────────────
 REFRESH_COOKIE_NAME = "refresh_token"
-REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
+REFRESH_COOKIE_PATH = "/"
 
 # ── Email / Cooldowns ─────────────────────────────────────────────
 RESEND_VERIFICATION_COOLDOWN_SECONDS = 60

@@ -1,3 +1,5 @@
+# app/api/v1/auth/oauth_router.py
+
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -10,10 +12,12 @@ from app.services.oauth_service import OAuthService
 
 router = APIRouter(prefix="/auth", tags=["OAuth"])
 
+
 @router.get("/google/login", response_model=OAuthURLResponse)
 async def google_login():
     url = await OAuthService.get_google_authorization_url()
     return OAuthURLResponse(authorization_url=url)
+
 
 @router.get("/google/callback")
 async def google_callback(
@@ -31,8 +35,8 @@ async def google_callback(
     response = RedirectResponse(url=settings.frontend_url)
     try:
         result = await OAuthService.handle_google_callback(code, state, db, response)
-    except HTTPException as e:
-        logger.warning(f"Google OAuth callback failed: {e.detail}")
+    except Exception:
+        logger.exception("Google OAuth callback failed")
         return RedirectResponse(url=f"{settings.frontend_url}/oauth/callback?error=oauth_failed")
 
     redirect_url = f"{settings.frontend_url}/oauth/callback#access_token={result.access_token}"
@@ -62,8 +66,8 @@ async def github_callback(
     response = RedirectResponse(url=settings.frontend_url)
     try:
         result = await OAuthService.handle_github_callback(code, state, db, response)
-    except HTTPException as e:
-        logger.warning(f"GitHub OAuth callback failed: {e.detail}")
+    except Exception:
+        logger.exception("GitHub OAuth callback failed")
         return RedirectResponse(url=f"{settings.frontend_url}/oauth/callback?error=oauth_failed")
 
     redirect_url = f"{settings.frontend_url}/oauth/callback#access_token={result.access_token}"

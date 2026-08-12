@@ -7,6 +7,11 @@ import sys
 from app.core.config import settings
 from app.core.database import check_db_connection
 from app.core.redis import check_redis_connection
+from app.core.mongo import (
+    check_mongo_connection,
+    setup_product_collection,
+    client as mongo_client,
+)
 from app.api.v1.health import router as health_router
 from app.api.v1.auth.router import router as auth_router
 from app.api.v1.auth.oauth_router import router as oauth_router
@@ -28,8 +33,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.environment}")
     await check_db_connection()
     await check_redis_connection()
+    await check_mongo_connection()
+    await setup_product_collection()
     yield
     logger.info("Shutting down SnappCart API...")
+    await mongo_client.close()
 
 
 app = FastAPI(

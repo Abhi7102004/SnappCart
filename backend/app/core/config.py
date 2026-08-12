@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     aws_region: str = "ap-south-1"
     ses_from_email: str = ""
     ses_from_name: str = "SnappCart"
+    
+    mongodb_url: str = ""
+    cloudfront_domain: str = ""
 
     class Config:
         env_file = ".env"

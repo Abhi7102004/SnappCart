@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     aws_region: str = "ap-south-1"
     ses_from_email: str = ""
     ses_from_name: str = "SnappCart"
+    s3_bucket: str = "snappcart-products"
     
     mongodb_url: str = ""
     cloudfront_domain: str = ""

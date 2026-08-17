@@ -7,6 +7,7 @@ import sys
 from app.core.config import settings
 from app.core.database import check_db_connection
 from app.core.redis import check_redis_connection
+from app.core.s3 import check_s3_connection
 from app.core.mongo import (
     check_mongo_connection,
     setup_product_collection,
@@ -17,6 +18,8 @@ from app.api.v1.auth.router import router as auth_router
 from app.api.v1.auth.oauth_router import router as oauth_router
 from app.api.v1.admin.router import router as admin_router
 from app.api.v1.auth.two_factor_router import router as two_factor_router
+from app.api.v1.products.router import router as products_router
+from app.api.v1.admin.category_router import router as category_router
 
 logger.remove()
 logger.add(
@@ -35,6 +38,7 @@ async def lifespan(app: FastAPI):
     await check_redis_connection()
     await check_mongo_connection()
     await setup_product_collection()
+    check_s3_connection()
     yield
     logger.info("Shutting down SnappCart API...")
     await mongo_client.close()
@@ -62,3 +66,5 @@ app.include_router(auth_router, prefix="/api/v1",tags=["Auth"])
 app.include_router(oauth_router, prefix="/api/v1",tags=["OAuth"])
 app.include_router(admin_router, prefix="/api/v1",tags=["Admin"])
 app.include_router(two_factor_router, prefix="/api/v1",tags=["2FA"])
+app.include_router(products_router, prefix="/api/v1", tags=["Products"])
+app.include_router(category_router, prefix="/api/v1", tags=["Admin: Categories"])

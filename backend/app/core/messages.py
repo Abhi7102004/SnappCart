@@ -32,3 +32,12 @@ OAUTH_FAILED = "OAuth authentication failed. Please try again."
 
 PRODUCT_NOT_FOUND = "Product not found"
 PRODUCT_INVALID_ID = "Invalid product ID format"
+
+CATEGORY_NOT_FOUND = "Category not found"
+CATEGORY_SLUG_EXISTS = "A category with this slug already exists"
+CATEGORY_PARENT_NOT_FOUND = "Parent category does not exist"
+CATEGORY_CIRCULAR_PARENT = "Cannot set a category as its own ancestor"
+CATEGORY_HAS_PRODUCTS = "Cannot delete a category that still has products"
+
+PRODUCT_UPDATE_FORBIDDEN = "You cannot modify a product you do not own"
+PRODUCT_SLUG_EXISTS = "You already have a product with this slug"

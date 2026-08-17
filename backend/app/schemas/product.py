@@ -67,3 +67,22 @@ class ProductResponse(BaseModel):
             return images
         return [f"https://{domain}/{key}" for key in images]
 
+class ProductUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    slug: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, min_length=10)
+    brand: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    price: Optional[int] = Field(default=None, ge=0)
+    mrp: Optional[int] = Field(default=None, ge=0)
+    specs: Optional[Dict[str, str]] = None
+    images: Optional[List[str]] = Field(default=None, min_length=1)
+    variants: Optional[List[VariantSchema]] = Field(default=None, min_length=1)
+    tags: Optional[List[str]] = None
+    is_published: Optional[bool] = None
+
+class ProductListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: list[ProductResponse]
+    

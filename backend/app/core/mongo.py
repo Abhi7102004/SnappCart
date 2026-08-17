@@ -63,6 +63,8 @@ async def setup_product_collection() -> None:
     await products_collection.create_index("seller_id")
     await products_collection.create_index("category_id")
     await products_collection.create_index(
-        [("seller_id", 1), ("slug", 1)], unique=True
+        [("seller_id", 1), ("slug", 1)],
+        unique=True,
+        partialFilterExpression={"is_deleted": False},
     )
     logger.info("Product indexes ensured")
